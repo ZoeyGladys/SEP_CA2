@@ -250,8 +250,11 @@
                             age: document.getElementById("age").value,
                             income: document.getElementById("income").value,
                             sla: document.getElementById("serviceLevelAgreement").checked ? 1:0,
-                            password: document.getElementById("password").value
                         };
+                            if (document.getElementById("password").value !== ""){
+                                data.password = document.getElementById("password").value;
+                            }
+                        
                         
                         fetch(new Request('/api/updateMember',
                         {
