@@ -326,7 +326,7 @@ var memberDB = {
                     var income = details.income;
                     var sla = details.sla;
                     var password = details.password;
-                    if(password == null || password == '') {
+                    if(typeof password !== "string" || password.trim() === "") {
                         var sql = 'UPDATE memberentity SET NAME=?, PHONE=?, CITY=?, ADDRESS=?, SECURITYQUESTION=?,'
                         + 'SECURITYANSWER=?, AGE=?, INCOME=?, SERVICELEVELAGREEMENT=? WHERE EMAIL=?';
                         var sqlArgs = [name,phone,country,address,securityQuestion,securityAnswer,age,income,sla,email];
