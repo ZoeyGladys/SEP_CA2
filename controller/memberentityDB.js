@@ -190,8 +190,21 @@ app.put('/api/activateMemberAccount', jsonParser, function (req, res) {
     }
 });
 
+
+
 app.put('/api/updateMember', [middleware.checkToken, jsonParser], function (req, res) {
-    member.updateMember(req.body)
+    
+    // creating a copy of the data to send to the model
+    let updateData = req.body;
+
+    // FIX: checking if the password is empty or just whitespace
+    if (!updateData.password || updateData.password.trim() === "") {
+        // removing password from the object so the Model knows not to update it
+        delete updateData.password;
+    }
+
+    // call the model with the "cleaned" data
+    member.updateMember(updateData)
         .then((result) => {
             if(result.success) {
                 member.getMember(req.body.email)
