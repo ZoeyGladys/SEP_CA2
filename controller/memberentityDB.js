@@ -223,6 +223,8 @@ app.put('/api/updateMember', [middleware.checkToken, jsonParser], function (req,
         });
 });
 
+
+
 app.put('/api/updateMemberPassword', jsonParser, function (req, res) {
     var email = req.body.email;
     var password = req.body.password;
