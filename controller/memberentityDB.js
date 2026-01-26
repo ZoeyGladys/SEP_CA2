@@ -228,7 +228,13 @@ app.put('/api/updateMember', [middleware.checkToken, jsonParser], function (req,
 app.put('/api/updateMemberPassword', jsonParser, function (req, res) {
     var email = req.body.email;
     var password = req.body.password;
-    member.updateMemPasswordAndResetCode(email,password)
+
+    //validate password is not empty
+    if (!password || password.trim() === "") {
+        return res.status(400).send("Password cannot be empty when changing password.");
+    }
+
+    member.updateMemPasswordAndResetCode(email, password)
         .then((result) => {
             res.send(result);
         })

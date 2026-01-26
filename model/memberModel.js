@@ -429,35 +429,41 @@ var memberDB = {
             });
         });
     },
-    updateMemPasswordAndResetCode: function (email, password) {
-        return new Promise( ( resolve, reject ) => {
-            var conn = db.getConnection();
-            conn.connect(function (err) {
-                if (err) {
-                    console.log(err);
-                    conn.end();
-                    return reject(err);
-                }
-                else {
-                    bcrypt.hash(password, 5, function(err, hash) {
-                        var sql = 'UPDATE memberentity SET PASSWORDHASH=?,PASSWORDRESET=? WHERE EMAIL=?';
-                        var sqlArgs = [hash,generateRandomNumber(40),email];
-                        conn.query(sql, sqlArgs, function (err, result) {
-                            if (err) {
+updateMemPasswordAndResetCode: function (email, password) {
+    return new Promise( ( resolve, reject ) => {
+        
+        // SC-8 FIX: Final safeguard check for empty password
+        if (!password || password.trim() === "") {
+            return reject("Validation Error: Password cannot be empty.");
+        }
+
+        var conn = db.getConnection();
+        conn.connect(function (err) {
+            if (err) {
+                console.log(err);
+                conn.end();
+                return reject(err);
+            }
+            else {
+                bcrypt.hash(password, 5, function(err, hash) {
+                    var sql = 'UPDATE memberentity SET PASSWORDHASH=?,PASSWORDRESET=? WHERE EMAIL=?';
+                    var sqlArgs = [hash, generateRandomNumber(40), email];
+                    conn.query(sql, sqlArgs, function (err, result) {
+                        if (err) {
+                            conn.end();
+                            return reject(err);
+                        } else {
+                            if(result.affectedRows > 0) {
                                 conn.end();
-                                return reject(err);
-                            } else {
-                                if(result.affectedRows > 0) {
-                                    conn.end();
-                                    return resolve({success:true});
-                                }
+                                return resolve({success:true});
                             }
-                        });
+                        }
                     });
-                }
-            });
+                });
+            }
         });
-    },
+    });
+},
     sendFeedback: function (name, email, subject, message) {
         return new Promise( ( resolve, reject ) => {
             var conn = db.getConnection();
