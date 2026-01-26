@@ -190,7 +190,11 @@
                 return startDate.toLocaleDateString("en-US", options);
             }
 
-            async function submitForm() {
+            async function submitForm(event) {
+                if (event) event.preventDefault();
+
+                console.log("submitForm called");
+                console.log("member from sessionStorage:", member);
                 var oldPassword = document.getElementById('oldPassword').value;
                 var password = document.getElementById("password").value;
                 var repassword = document.getElementById("repassword").value;
@@ -251,8 +255,9 @@
                             income: document.getElementById("income").value,
                             sla: document.getElementById("serviceLevelAgreement").checked ? 1:0,
                         };
-                            if (document.getElementById("password").value !== ""){
-                                data.password = document.getElementById("password").value;
+                            const newPassword = document.getElementById("password").value;
+                            if (newPassword && newPassword.trim() !== "") {
+                                data.password = newPassword;
                             }
                         
                         
@@ -315,11 +320,11 @@
                             </ul>
                             <div class="tab-content">
                                 <div id="overview" class="tab-pane active">
-                                    <form onsubmit="return false;" id="profileForm">
+                                    <form id="profileForm" onsubmit="submitForm(event); return false;">
                                         <h4>Personal Information</h4>
                                         <div class="form-group">
                                             <label>Name</label>
-                                            <input class="form-control" required="true" id="name" type="text" />
+                                            <input class="form-control" id="name" type="text" />
                                         </div>
                                         <div class="form-group">
                                             <label>E-mail Address</label>
@@ -626,7 +631,7 @@
                                         <div class="panel-footer" style="padding-bottom: 0px;">
                                             <div class="row">
                                                 <div class="form-group">
-                                                    <input type="submit" onclick="submitForm()" value="Submit" class="btn btn-primary"/>
+                                                    <input type="submit" value="Submit" class="btn btn-primary"/>
                                                     <input type="reset" value="Reset" class="btn btn-primary"/>
                                                 </div>
                                             </div>
