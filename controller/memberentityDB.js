@@ -90,25 +90,39 @@ app.post('/api/loginMember', jsonParser, function (req, res) {
         });
 });
 
+
+
+
 var request = require('request');
+
 app.post('/api/registerMember', jsonParser, function (req, res) {
     var email = req.body.email;
     var password = req.body.password;
     var recaptcha = req.body.recaptcha;
     var hostName = req.body.hostName;
-    if(recaptcha == null || recaptcha == undefined || recaptcha == '') {
-        res.send({ "success":false, "errorMsg" : "Please select captcha" });
+
+    // 1. Checking if password is blank or just spaces
+    if (!password || password.trim() === "") {
+        return res.send({ "success": false, "errorMsg": "Password cannot be blank" });
     }
+
+    // 2. check if reCAPTCHA is selected
+    if (recaptcha == null || recaptcha == undefined || recaptcha == '') {
+        res.send({ "success": false, "errorMsg": "Please select captcha" });
+    } 
     else {
         var secretKey = "6LcLaXYUAAAAAALjkMho0ywJyylxa0kUOylNG7SU";
         var verificationUrl = "https://www.google.com/recaptcha/api/siteverify?secret=" + secretKey
             + "&response=" + recaptcha + "&remoteip=" + req.connection.remoteAddress;
+
+        // 3. Verifying captcha with Google
         request(verificationUrl, function (error, response, body) {
             body = JSON.parse(body);
             if (body.success !== undefined && !body.success) {
-                res.send({ "errorMsg": "Failed captcha verification" });
-            }
+                res.send({ "success": false, "errorMsg": "Failed captcha verification" });
+            } 
             else {
+                // 4. Registering the member
                 member.registerMember(email, password, hostName)
                     .then((result) => {
                         res.send(result);
@@ -192,25 +206,28 @@ app.put('/api/activateMemberAccount', jsonParser, function (req, res) {
 
 
 
+
+
 app.put('/api/updateMember', [middleware.checkToken, jsonParser], function (req, res) {
-    
-    // creating a copy of the data to send to the model
     let updateData = req.body;
 
-    // FIX: checking if the password is empty or just whitespace
-    if (!updateData.password || updateData.password.trim() === "") {
-        // removing password from the object so the Model knows not to update it
+    // 1. checking If the user provided a password field but it is empty/whitespace
+    if (updateData.hasOwnProperty('password')) {
+        if (!updateData.password || updateData.password.trim() === "") {
+            // Return early with an error message
+            return res.status(400).send("Password cannot be blank if you are trying to update it.");
+        }
+    } else {
+        // If password isn't in the request at all remove it to be safe
         delete updateData.password;
     }
 
-    // call the model with the "cleaned" data
+    // 2. proceed only if validation passed
     member.updateMember(updateData)
         .then((result) => {
             if(result.success) {
                 member.getMember(req.body.email)
-                    .then((result) => {
-                        res.send(result);
-                    })
+                    .then((result) => { res.send(result); })
                     .catch((err) => {
                         console.log(err);
                         res.status(500).send("Failed to get member");
