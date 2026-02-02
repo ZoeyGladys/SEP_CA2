@@ -114,4 +114,26 @@ app.put('/api/updatePurchaseOrder', [middleware.checkToken, jsonParser], functio
         });
 });
 
+exports.getByMember = function(req, res) {
+    var memberId = req.params.memberId;
+
+    salesRecordModel.getByMemberId(memberId, function(err, orders) {
+        if (err) return res.status(500).json(err);
+
+        let done = 0;
+        if (orders.length === 0) return res.json([]);
+
+        orders.forEach(order => {
+            salesRecordLineItemModel.getBySalesRecordId(order.id, function(err, items) {
+                order.items = items;
+                done++;
+                if (done === orders.length) {
+                    res.json(orders);
+                }
+            });
+        });
+    });
+};
+
+
 module.exports = app;
