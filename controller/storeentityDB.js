@@ -9,8 +9,13 @@ app.get('/api/getItemQuantity', function (req, res) {
     var storeId = req.query.storeId;
     store.getItemQuantity(sku, storeId)
         .then((result) => {
-            res.send(result);
-        })
+    // handle empty results / null sum safely
+    if (!result || result.length === 0 || result[0].sum == null || result[0].sum === '') {
+        res.send([{ sum: 0 }]);   // keep same format your frontend expects
+    } else {
+        res.send([{ sum: result[0].sum }]);
+    }
+})
         .catch((err) => {
             console.log(err);
             res.status(500).send("Failed to get item quantity");

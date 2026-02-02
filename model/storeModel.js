@@ -12,11 +12,12 @@ var storeDB = {
                 }
                 else {
                     if(storeId == -1) {
-                        var sql = 'SELECT sum(l.QUANTITY) as sum FROM storeentity s, warehouseentity w, '
-                            +'storagebinentity sb, storagebinentity_lineitementity sbli, lineitementity l, '
-                            +'itementity i where s.WAREHOUSE_ID=w.ID and w.ID=sb.WAREHOUSE_ID and '
-                            +'sb.ID=sbli.StorageBinEntity_ID and sbli.lineItems_ID=l.ID and '
-                            +'l.ITEM_ID=i.ID and i.SKU=? and sb.TYPE = "Outbound"';
+                       var sql = 'SELECT sum(l.QUANTITY) as sum FROM storeentity s, warehouseentity w, '
+                                  + 'storagebinentity sb, storagebinentity_lineitementity sbli, lineitementity l, '
+                                  + 'itementity i, furnitureentity f '
+                                  + 'where s.WAREHOUSE_ID=w.ID and w.ID=sb.WAREHOUSE_ID and '
+                                  + 'sb.ID=sbli.StorageBinEntity_ID and sbli.lineItems_ID=l.ID and l.ITEM_ID=i.ID '
+                                  + 'and i.ID=f.ID and s.ID=? and f.SKU=? and sb.TYPE = "Outbound"';
                         conn.query(sql, [sku], function (err, result) {
                             if (err) {
                                 conn.end();

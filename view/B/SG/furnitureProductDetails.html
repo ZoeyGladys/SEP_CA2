@@ -44,28 +44,16 @@
                         }
                     }
                     document.getElementById("storeID").innerHTML = selectOptions;
-
-                    var quantityDivTxt = 'Status: ';
-                    var itemQty = currentUrl.searchParams.get("itemQty");
-                    if(itemQty != null) {
-                        quantityDivTxt += itemQty > 0 ? 'Available':'Unavailable';
-                        quantityDivTxt += '<br/>Remaining Qty: ' + itemQty;
-                        document.getElementById("quantityDiv").innerHTML = '\
-                            <div class="col-md-6">\
-                                ' + quantityDivTxt + '\
-                            </div>';
-                    }
                 }).catch(function(error) {
                     console.log(error);
                 });
 
             function addToCart(sku,id,price,name,imageURL) {
-                fetch(new Request('/api/getItemQuantity?sku=' + sku + '&storeId=-1',
-                {
-                    method: 'GET'
-                })).then(function (response) {
+              fetch('/api/getItemQuantity?sku=' + sku + '&storeId=-1')
+                .then(function (response) {
                     return response.json();
-                }).then(function (data) {
+                })
+                .then(function (data) {
                     var quantity = data[0].sum;
                     //if there is not enough quantity for a product to be added to the cart
                     if(quantity == null || quantity == '') {
@@ -127,28 +115,34 @@
                     console.log(error);
                 });
             }
-
             function CheckItemAvail() {
-                var storeId = document.getElementById("storeID").value;
-                if(storeId != null && storeId != '') {
-                    fetch(new Request('/api/getItemQuantity?sku=' + sku + '&storeId=' + storeId,
-                    {
-                        method: 'GET'
-                    })).then(function (response) {
-                        return response.json();
-                    }).then(function (data) {
-                        var quantity = data[0].sum;
-                        if(quantity == null || quantity == '') {
-                            quantity = 0;
-                        }
-                        //refresh page with item's quantity in the query parameter to display to the user
-                        var url = window.location.origin + window.location.pathname;
-                        window.location.href = url + '?sku=' + sku + '&itemQty=' + quantity + '&storeID=' + storeId;
-                    }).catch(function(error) {
-                        console.log(error);
-                    });
+    var storeId = document.getElementById("storeID").value;
+
+    if (storeId != null && storeId != '') {
+        fetch('/api/getItemQuantity?sku=' + sku + '&storeId=' + storeId)
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                var quantity = 0;
+
+                // data format: [{ "sum": 8 }]
+                if (Array.isArray(data) && data.length > 0 && data[0].sum != null && data[0].sum !== '') {
+                    quantity = data[0].sum;
                 }
-            }
+
+                console.log("getItemQuantity result:", data);
+
+                // // OPTIONAL if you want display on page:
+               document.getElementById("remainingQty").innerText = quantity;
+document.getElementById("availabilityStatus").innerText =
+    (quantity > 0) ? "Available" : "Unavailable";
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+    }
+}
         </script>
         <div class="body">
             <script src="menu2.js"></script>
@@ -191,10 +185,15 @@
                                             <form onsubmit="return false;">
                                                 View Item Availability<br/>
                                                 <select style="color: black;" name="storeID" id="storeID"></select><br/><br/>
-                                                <input type="submit" onclick="CheckItemAvail()" class="btn btn-primary btn-icon" value="Check Item Availability"/>
+                                                <button type="button" onclick="CheckItemAvail()" class="btn btn-primary btn-icon">
+                                                  Check Item Availability
+                                                </button>
                                             </form>
                                         </div>
-                                        <div id="quantityDiv"></div>
+                                        <div id="quantityDiv" class="col-md-6">
+  Status: <span id="availabilityStatus">-</span><br/>
+  Remaining Qty: <span id="remainingQty">-</span>
+</div>
                                     </div>
                                 </div>
                             </div>
