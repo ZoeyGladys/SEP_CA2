@@ -223,21 +223,24 @@ app.put('/api/updateMember', [middleware.checkToken, jsonParser], function (req,
     }
 
     // 2. proceed only if validation passed
-    member.updateMember(updateData)
-        .then((result) => {
-            if(result.success) {
-                member.getMember(req.body.email)
-                    .then((result) => { res.send(result); })
-                    .catch((err) => {
-                        console.log(err);
-                        res.status(500).send("Failed to get member");
-                    });
-            }
-        })
+member.updateMember(updateData)
+  .then((result) => {
+    if (result.success) {
+      member.getMember(req.body.email)
+        .then((result) => { res.send(result); })
         .catch((err) => {
-            console.log(err);
-            res.status(500).send("Failed to update member");
+          console.log(err);
+          res.status(500).send("Failed to get member");
         });
+    } else {
+      res.status(400).send(result);
+    }
+  })
+  .catch((err) => {
+    console.log(err);
+    res.status(500).send("Failed to update member");
+  });
+
 });
 
 

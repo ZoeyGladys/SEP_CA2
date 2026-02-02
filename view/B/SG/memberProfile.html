@@ -191,105 +191,121 @@
             }
 
             async function submitForm(event) {
-                if (event) event.preventDefault();
+    if (event) event.preventDefault();
 
-                console.log("submitForm called");
-                console.log("member from sessionStorage:", member);
-                var oldPassword = document.getElementById('oldPassword').value;
-                var password = document.getElementById("password").value;
-                var repassword = document.getElementById("repassword").value;
-                var ok = true;
-                console.log(oldPassword)
-                if (document.getElementById("profileForm").checkValidity()) {
-                    if (oldPassword != "" && password != "" && repassword != "") {
-                        var memberData = {
-                            id: member.id,
-                            password: oldPassword
-                        };
+    // read fields (trim to avoid "   " counting as input)
+    const oldPassword = (document.getElementById("oldPassword").value || "").trim();
+    const newPassword = (document.getElementById("password").value || "").trim();
+    const rePassword  = (document.getElementById("repassword").value || "").trim();
 
-                        await fetch(new Request('/api/verifyPassword',
-                        {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                Authorization: 'Bearer ' + authToken
-                            },
-                            body: JSON.stringify(memberData)
-                        })).then(function (response) {
-                            return response.json();
-                        }).then(function (data) {
-                            if(data.success) {
-                                if (password != repassword) {
-                                    //Check if password and repassword is the same
-                                    document.getElementById("password").style.borderColor = "#E34234";
-                                    document.getElementById("repassword").style.borderColor = "#E34234";
-                                    alert("Passwords do not match. Please key again.");
-                                    ok = false;
-                                } else if (password == repassword) {
-                                    //Check if password length is at least 8
-                                    if (password.length != 0 && password.length < 8) {
-                                        alert("Passwords too short. At least 8 characters.");
-                                        ok = false;
-                                    }
-                                }
-                            }
-                            else {
-                                alert("Old password is incorrect.");
-                                ok = false;
-                            }
-                        }).catch(function (error) {
-                            console.log(error);
-                        }); 
-                    }
+    // reset borders (optional but nice)
+    document.getElementById("oldPassword").style.borderColor = "";
+    document.getElementById("password").style.borderColor = "";
+    document.getElementById("repassword").style.borderColor = "";
 
-                    if(ok) {
-                        var data = {
-                            email: document.getElementById("email").value,
-                            name: document.getElementById("name").value,
-                            phone: document.getElementById("phone").value,
-                            country: document.getElementById("country").value,
-                            address: document.getElementById("address").value,
-                            securityQuestion: document.getElementById("securityQuestion").value,
-                            securityAnswer: document.getElementById("securityAnswer").value,
-                            age: document.getElementById("age").value,
-                            income: document.getElementById("income").value,
-                            sla: document.getElementById("serviceLevelAgreement").checked ? 1:0,
-                        };
-                            const newPassword = document.getElementById("password").value;
-                            if (newPassword && newPassword.trim() !== "") {
-                                data.password = newPassword;
-                            }
-                        
-                        
-                        fetch(new Request('/api/updateMember',
-                        {
-                            method: 'PUT',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                Authorization: 'Bearer ' + authToken
-                            },
-                            body: JSON.stringify(data)
-                        })).then(function (response) {
-                            return response.json();
-                        }).then(function (data) {
-                            //update member's info in the session storage
-                            sessionStorage.setItem("member", JSON.stringify(data));
-                            sessionStorage.setItem("memberEmail", data.email);
-                            sessionStorage.setItem("memberName", data.name);
-                            var url = window.location.origin + window.location.pathname;
-                            window.location.href = url + '?goodMsg=Successfully Updated!';
-                        }).catch(function (error) {
-                            console.log(error);
-                            var url = window.location.origin + window.location.pathname;
-                            window.location.href = url + '?errMsg=Unable to Update.';
-                        });
-                    }
-                }
-            }
+    // basic HTML form validity first
+    if (!document.getElementById("profileForm").checkValidity()) return;
 
-            function pdpaWindow() {
-                var myWindow = window.open("pdpa.html");
-            }
+    // Detect if user is trying to change password:
+    // If they touched ANY of the 3 fields, treat as "change password attempt"
+    const wantsPasswordChange = (oldPassword !== "" || newPassword !== "" || rePassword !== "");
+
+    // Prepare the profile data (NO password by default)
+    const payload = {
+      id: member.id,
+      email: member.email,
+      name: document.getElementById("name").value,
+      phone: document.getElementById("phone").value,
+      country: document.getElementById("country").value,
+      address: document.getElementById("address").value,
+      securityQuestion: document.getElementById("securityQuestion").value,
+      securityAnswer: document.getElementById("securityAnswer").value,
+      age: document.getElementById("age").value,
+      income: document.getElementById("income").value,
+      sla: document.getElementById("serviceLevelAgreement").checked ? 1 : 0,
+    };
+
+    // If user wants to change password, enforce ALL rules
+    if (wantsPasswordChange) {
+      // Rule 1: all 3 must be filled
+      if (oldPassword === "" || newPassword === "" || rePassword === "") {
+        alert("To change password, please fill in Old Password, New Password and Re-enter New Password.");
+        if (oldPassword === "") document.getElementById("oldPassword").style.borderColor = "#E34234";
+        if (newPassword === "") document.getElementById("password").style.borderColor = "#E34234";
+        if (rePassword === "") document.getElementById("repassword").style.borderColor = "#E34234";
+        return;
+      }
+
+      // Rule 2: new + re-enter must match
+      if (newPassword !== rePassword) {
+        alert("New password and re-enter password do not match.");
+        document.getElementById("password").style.borderColor = "#E34234";
+        document.getElementById("repassword").style.borderColor = "#E34234";
+        return;
+      }
+
+      // Rule 3: min length 8
+      if (newPassword.length < 8) {
+        alert("Password too short. At least 8 characters.");
+        document.getElementById("password").style.borderColor = "#E34234";
+        return;
+      }
+
+      // Rule 4: verify old password with server
+      try {
+        const verifyBody = { id: member.id, password: oldPassword };
+
+        const verifyResp = await fetch(new Request("/api/verifyPassword", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + authToken
+          },
+          body: JSON.stringify(verifyBody)
+        }));
+
+        const verifyData = await verifyResp.json();
+
+        if (!verifyData.success) {
+          alert("Old password is incorrect.");
+          document.getElementById("oldPassword").style.borderColor = "#E34234";
+          return;
+        }
+      } catch (err) {
+        console.log(err);
+        alert("Unable to verify old password. Please try again.");
+        return;
+      }
+
+      // Only AFTER all checks pass, include password in update
+      payload.password = newPassword;
+    }
+
+    // Finally update member profile
+    try {
+      const resp = await fetch(new Request("/api/updateMember", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + authToken
+        },
+        body: JSON.stringify(payload)
+      }));
+
+      const updatedMember = await resp.json();
+
+      sessionStorage.setItem("member", JSON.stringify(updatedMember));
+      sessionStorage.setItem("memberEmail", updatedMember.email);
+      sessionStorage.setItem("memberName", updatedMember.name);
+
+      const url = window.location.origin + window.location.pathname;
+      window.location.href = url + "?goodMsg=Successfully Updated!";
+    } catch (err) {
+      console.log(err);
+      const url = window.location.origin + window.location.pathname;
+      window.location.href = url + "?errMsg=Unable to Update.";
+    }
+  }
         </script>
         <script src="menu2.js"></script>
         <div role="main" class="main">
