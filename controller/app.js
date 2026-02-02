@@ -16,6 +16,8 @@ app.use(require('./supplierentityDB.js'));
 app.use(require('./warehouseentityDB.js'));
 app.use(require('./lineitementityDB.js'));
 app.use(require('./storagebinentityDB.js'));
+app.get('/api/getPurchaseOrder/:memberId', salesRecord.getByMember);
+
 
 let middleware = require('./middleware');
 app.get('/api/checkToken', middleware.checkToken, function (req, res) {

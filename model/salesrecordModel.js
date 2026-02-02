@@ -29,4 +29,12 @@ var salesRecordDB = {
         });
     }
 };
+
+
+module.exports.getByMemberId = function(memberId, callback) {
+    var sql = "SELECT * FROM salesrecord WHERE member_id = ?";
+    db.query(sql, [memberId], callback);
+};
+
+
 module.exports = salesRecordDB

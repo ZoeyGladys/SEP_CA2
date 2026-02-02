@@ -15,7 +15,7 @@
 
                 var staff = JSON.parse(sessionStorage.getItem('staff'));
                 var finalListOfPO = null;
-                fetch(new Request('/api/getPurchaseOrders',
+                fetch(new Request('/api/getPurchaseOrders',  + member.id)
                 {
                     method: 'GET',
                     headers: {

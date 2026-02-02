@@ -28,4 +28,10 @@ var salesRecord_lineItemDB = {
         });
     }
 };
+
+module.exports.getBySalesRecordId = function(salesRecordId, callback) {
+    var sql = "SELECT * FROM salesrecord_lineitem WHERE salesrecord_id = ?";
+    db.query(sql, [salesRecordId], callback);
+};
+
 module.exports = salesRecord_lineItemDB

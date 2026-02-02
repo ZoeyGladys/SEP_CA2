@@ -127,4 +127,24 @@ app.put('/api/updateShippingOrderShippedDate', [middleware.checkToken, jsonParse
         });
 });
 
+exports.getByStaff = function(req, res) {
+    const staffId = req.params.staffId;
+
+    shippingOrderModel.getByStaffId(staffId, function(err, orders) {
+        if (err) return res.status(500).json(err);
+
+        let completed = 0;
+        if (orders.length === 0) return res.json([]);
+
+        orders.forEach(order => {
+            lineItemModel.getByOrderId(order.id, function(err, items) {
+                order.items = items;
+                completed++;
+                if (completed === orders.length) res.json(orders);
+            });
+        });
+    });
+};
+
+
 module.exports = app;
